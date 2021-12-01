@@ -24,12 +24,9 @@ int main()
     // Part 2
     {
         int increases = 0;
-        int previous = values[0] + values[1] + values[2];
         for (int i = 3; i < values.size(); i++) 
         {
-            int current = previous - values[i-3] + values[i];
-            if (current > previous) increases++;
-            previous = current;
+            if (values[i] > values[i-3]) increases++;
         }
         std::cout << "Part 2. Number of increases: " << increases << std::endl;
     }
