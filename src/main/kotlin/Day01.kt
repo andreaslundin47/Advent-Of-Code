@@ -4,7 +4,8 @@ val elfInventories = File("src/main/resources/day01.txt").readText().trim().spli
 
 fun main() {
     val caloriesPerElf: List<Int> = elfInventories.map { inventory ->
-        inventory.split("\n").sumOf { it.toInt() } }
+        inventory.lines().sumOf { it.toInt() }
+    }
 
     val highestCaloriesInventory = caloriesPerElf.max()
 
