@@ -1,5 +1,15 @@
+import java.io.File
+
+val elfInventories = File("src/main/resources/day01.txt").readText().trim().split("\n\n")
 
 fun main() {
-    println("Part 1.")
-    println("Part 2.")
+    val caloriesPerElf: List<Int> = elfInventories.map { inventory ->
+        inventory.split("\n").sumOf { it.toInt() } }
+
+    val highestCaloriesInventory = caloriesPerElf.max()
+
+    val sumOfThreeHighest = caloriesPerElf.sorted().takeLast(3).sum()
+
+    println("Part 1. $highestCaloriesInventory")
+    println("Part 2. $sumOfThreeHighest")
 }
