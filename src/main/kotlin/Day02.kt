@@ -7,13 +7,11 @@ val guide = File("src/main/resources/day02.txt")
         a.first() to b.first()
     }
 
-sealed class RPSMove(val value: Int) {
+sealed class RPSMove(val value: Int, val weakTo: RPSMove?, val strongerThan: RPSMove?) {
     abstract fun play(opponent: RPSMove): Int
-    abstract fun weakTo(): RPSMove
-    abstract fun strongerThan(): RPSMove
 }
 
-class Rock: RPSMove(1)  {
+class Rock: RPSMove(1, Paper(), Scissors())  {
     override fun play(opponent: RPSMove): Int {
         return value + when (opponent) {
             is Rock -> 3
@@ -21,12 +19,9 @@ class Rock: RPSMove(1)  {
             is Scissors -> 6
         }
     }
-
-    override fun weakTo() = Paper()
-    override fun strongerThan() = Scissors()
 }
 
-class Paper: RPSMove(2) {
+class Paper: RPSMove(2, Scissors(), Rock()) {
      override fun play(opponent: RPSMove): Int {
         return value + when (opponent) {
             is Rock -> 6
@@ -34,12 +29,9 @@ class Paper: RPSMove(2) {
             is Scissors -> 0
         }
     }
-
-    override fun weakTo() = Scissors()
-    override fun strongerThan() = Rock()
 }
 
-class Scissors: RPSMove(3) {
+class Scissors: RPSMove(3, Rock(), Paper()) {
     override fun play(opponent: RPSMove): Int {
         return value + when (opponent) {
             is Rock -> 0
@@ -47,9 +39,6 @@ class Scissors: RPSMove(3) {
             is Scissors -> 3
         }
     }
-
-    override fun weakTo() = Rock()
-    override fun strongerThan() = Paper()
 }
 
 fun opponentMove(symbol: Char): RPSMove {
@@ -72,9 +61,9 @@ fun firstReading(symbol: Char): RPSMove {
 
 fun secondReading(symbol: Char, opponent: RPSMove): RPSMove {
     return when(symbol) {
-        'X' -> opponent.strongerThan()
+        'X' -> opponent.strongerThan ?: opponent
         'Y' -> opponent
-        'Z' -> opponent.weakTo()
+        'Z' -> opponent.weakTo ?: opponent
         else -> error("")
     }
 }
