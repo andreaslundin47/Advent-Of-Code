@@ -4,8 +4,8 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="02a3c468-8a6b-4a3f-a3a2-bb63fd48310c" name="Changes" comment="Init commit. Getting ready for december!">
-      <change afterPath="$PROJECT_DIR$/src/main/kotlin/Day02.kt" afterDir="false" />
+    <list default="true" id="02a3c468-8a6b-4a3f-a3a2-bb63fd48310c" name="Changes" comment="Day 2. Very OO approach in Kotlin">
+      <change afterPath="$PROJECT_DIR$/src/main/kotlin/Day03.kt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -40,7 +40,7 @@
     &quot;SHARE_PROJECT_CONFIGURATION_FILES&quot;: &quot;true&quot;
   }
 }</component>
-  <component name="RunManager" selected="Kotlin.Day02Kt">
+  <component name="RunManager" selected="Kotlin.Day03Kt">
     <configuration name="Day01Kt" type="JetRunConfigurationType" temporary="true" nameIsGenerated="true">
       <option name="MAIN_CLASS_NAME" value="Day01Kt" />
       <module name="Adv2022" />
@@ -55,8 +55,16 @@
         <option name="Make" enabled="true" />
       </method>
     </configuration>
+    <configuration name="Day03Kt" type="JetRunConfigurationType" temporary="true" nameIsGenerated="true">
+      <option name="MAIN_CLASS_NAME" value="Day03Kt" />
+      <module name="Adv2022" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
     <recent_temporary>
       <list>
+        <item itemvalue="Kotlin.Day03Kt" />
         <item itemvalue="Kotlin.Day02Kt" />
         <item itemvalue="Kotlin.Day01Kt" />
       </list>
@@ -78,7 +86,14 @@
       <option name="project" value="LOCAL" />
       <updated>1668869210270</updated>
     </task>
-    <option name="localTasksCounter" value="2" />
+    <task id="LOCAL-00002" summary="Day 2. Very OO approach in Kotlin">
+      <created>1669983036671</created>
+      <option name="number" value="00002" />
+      <option name="presentableId" value="LOCAL-00002" />
+      <option name="project" value="LOCAL" />
+      <updated>1669983036671</updated>
+    </task>
+    <option name="localTasksCounter" value="3" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -94,6 +109,7 @@
   </component>
   <component name="VcsManagerConfiguration">
     <MESSAGE value="Init commit. Getting ready for december!" />
-    <option name="LAST_COMMIT_MESSAGE" value="Init commit. Getting ready for december!" />
+    <MESSAGE value="Day 2. Very OO approach in Kotlin" />
+    <option name="LAST_COMMIT_MESSAGE" value="Day 2. Very OO approach in Kotlin" />
   </component>
 </project>
