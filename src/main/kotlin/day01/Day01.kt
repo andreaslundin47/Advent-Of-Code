@@ -1,3 +1,5 @@
+package day01
+
 import java.io.File
 
 val elfInventories = File("src/main/resources/day01.txt").readText().trim().split("\n\n")

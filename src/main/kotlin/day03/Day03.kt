@@ -1,3 +1,5 @@
+package day03
+
 import java.io.File
 
 val rucksacks: List<String> = File("src/main/resources/day03.txt").readLines()

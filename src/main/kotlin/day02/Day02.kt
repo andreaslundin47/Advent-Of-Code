@@ -1,3 +1,5 @@
+package day02
+
 import java.io.File
 
 val guide = File("src/main/resources/day02.txt")
