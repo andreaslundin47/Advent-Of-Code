@@ -2,49 +2,45 @@ package day05
 
 import java.io.File
 
-val stacksInput = File("src/main/resources/day05.txt").readText().substringBefore("\n\n").trim()
-val movesInput = File("src/main/resources/day05.txt").readText().substringAfter("\n\n").trim()
+val rawInput = File("src/main/resources/day05.txt").readText().trim()
 
-data class Move(val steps: Int, val from: Int, val to: Int)
+val stacksInput = rawInput.substringBefore("\n\n")
+val movesInput = rawInput.substringAfter("\n\n")
 
-fun String.toMove(): Move {
-    val parts = this.trim().split(" ")
-    return Move(parts[1].toInt(), parts[3].toInt()-1, parts[5].toInt()-1)
-}
 
-class CrateStacks(private val stacks: List<MutableList<Char>>) {
+data class Move(val count: Int, val from: Int, val to: Int)
+
+fun String.toMove(): Move =
+    split(" ").mapNotNull(String::toIntOrNull).let { d -> Move(d[0], d[1] -1, d[2] - 1) }
+
+
+class CrateStacks(private val stacks: MutableList<List<Char>>) {
+
     companion object {
         fun fromString(input: String): CrateStacks {
-            val rawStackIds = input.split("\n").reversed().first()
-            val rawStacks = input.split("\n").reversed().drop(1)
 
-            val ids = rawStackIds.filter { it != ' ' }
-            val padding = rawStackIds.length
+            val stackLabelsBar = input.lines().last()
+            val rawStacks = input.lines().dropLast(1).reversed()
 
-            val stacks = mutableListOf<MutableList<Char>>()
+            val stackIDs = stackLabelsBar.filter { it.isDigit() }
 
-            for (id in ids) {
-                val column = rawStackIds.indexOf(id)
-                val stack: List<Char> = rawStacks.map { line -> line.padEnd(padding)[column] }.filter { it != ' ' }
-                stacks.add(stack.toMutableList())
+            val stacks = stackIDs.map { id ->
+                val columnIndex = stackLabelsBar.indexOf(id)
+                rawStacks.map { row -> row[columnIndex] }.filter { it.isLetter() }
             }
 
-            return CrateStacks(stacks.toList())
+            return CrateStacks(stacks.toMutableList())
         }
     }
 
     fun makeMove(move: Move) {
-        stacks[move.to] +=  stacks[move.from].takeLast(move.steps).reversed()
-        for (i in 1..move.steps) {
-            stacks[move.from].removeLast()
-        }
+        stacks[move.to] += stacks[move.from].takeLast(move.count).reversed()
+        stacks[move.from] = stacks[move.from].dropLast(move.count)
     }
 
-    fun makeMultiMove(move: Move) {
-        stacks[move.to] +=  stacks[move.from].takeLast(move.steps)
-        for (i in 1..move.steps) {
-            stacks[move.from].removeLast()
-        }
+    fun makeBulkMove(move: Move) {
+        stacks[move.to] += stacks[move.from].takeLast(move.count)
+        stacks[move.from] = stacks[move.from].dropLast(move.count)
     }
 
     fun readTop(): String = stacks.map { stack -> stack.last() }.joinToString(separator = "")
@@ -52,19 +48,17 @@ class CrateStacks(private val stacks: List<MutableList<Char>>) {
 
 
 fun solvePartOne() {
-    val stacks = CrateStacks.fromString(stacksInput)
-    val moves = movesInput.split("\n").map { it.toMove() }
-    moves.forEach { move -> stacks.makeMove(move) }
+    val crateStacks = CrateStacks.fromString(stacksInput)
+    movesInput.lines().map{ it.toMove() }.forEach { move -> crateStacks.makeMove(move) }
 
-    println("Part 1. ${stacks.readTop()}")
+    println("Part 1. ${crateStacks.readTop()}")
 }
 
 fun solvePartTwo() {
-    val stacks = CrateStacks.fromString(stacksInput)
-    val moves = movesInput.split("\n").map { it.toMove() }
-    moves.forEach { move -> stacks.makeMultiMove(move) }
+    val crateStacks = CrateStacks.fromString(stacksInput)
+    movesInput.lines().map { it.toMove() }.forEach { move -> crateStacks.makeBulkMove(move) }
 
-    println("Part 1. ${stacks.readTop()}")
+    println("Part 1. ${crateStacks.readTop()}")
 }
 
 fun main() {

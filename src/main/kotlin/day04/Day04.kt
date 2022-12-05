@@ -11,39 +11,26 @@ data class Assignment(val lower: Int, val upper: Int) {
         }
     }
 
-    infix fun hasFullOverlap(other: Assignment): Boolean {
-        return this.lower >= other.lower && this.upper <= other.upper ||
-                other.lower >= this.lower && other.upper <= this.upper
-    }
+    operator fun contains(other: Assignment): Boolean = lower <= other.lower && upper > other.upper
 
-    infix fun hasSomeOverlap(other: Assignment): Boolean {
-        return !(this.upper < other.lower || this.lower > other.upper)
-    }
+    infix fun overlaps(other: Assignment): Boolean = upper >= other.lower && lower <= other.upper
 }
 
-
 val assignmentPairs: List<Pair<Assignment,Assignment>> = File("src/main/resources/day04.txt")
-    .readLines()
-    .map { line ->
-        val (a1, a2) = line.split(",").map { range -> Assignment.fromString(range) }
-        a1 to a2
+    .readLines().map { line ->
+        line.split(",")
+            .map { range -> Assignment.fromString(range) }
+            .let { (a1, a2) -> Pair(a1, a2) }
     }
 
 fun solvePartOne() {
-    val overlaps = assignmentPairs.map { pair ->
-        pair.first hasFullOverlap pair.second
-    }.count { it }
-
+    val overlaps: Int = assignmentPairs.count { (a1, a2) -> a1 in a2 || a2 in a1 }
     println("Part 1. Overlaps = $overlaps")
 }
 
 fun solvePartTwo() {
-    val overlaps = assignmentPairs.map { pair ->
-        pair.first hasSomeOverlap pair.second
-    }.count { it }
-
+    val overlaps: Int = assignmentPairs.count { pair -> pair.first overlaps pair.second }
     println("Part 2. Overlaps = $overlaps")
-
 }
 
 
