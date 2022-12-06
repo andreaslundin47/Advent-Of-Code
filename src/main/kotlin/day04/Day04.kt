@@ -11,7 +11,7 @@ data class Assignment(val lower: Int, val upper: Int) {
         }
     }
 
-    operator fun contains(other: Assignment): Boolean = lower <= other.lower && upper > other.upper
+    operator fun contains(other: Assignment): Boolean = lower <= other.lower && upper >= other.upper
 
     infix fun overlaps(other: Assignment): Boolean = upper >= other.lower && lower <= other.upper
 }
