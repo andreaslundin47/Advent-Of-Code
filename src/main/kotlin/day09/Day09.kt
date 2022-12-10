@@ -1,7 +1,6 @@
 package day09
 
 import java.io.File
-import kotlin.math.abs
 
 val inputs: List<Pair<Char,Int>> = File("src/main/resources/day09.txt").readLines()
     .map { it.substringBefore(" ").single() to it.substringAfter(" ").toInt() }
@@ -11,7 +10,7 @@ class HeadTail(private var hx: Int = 0, private var hy: Int = 0) {
     var tx = hx
     var ty = hy
 
-    private val seenByTail = hashSetOf( tx to ty )
+    private val tailVisits = hashSetOf( tx to ty )
 
     fun move(direction: Char) {
         when (direction) {
@@ -30,25 +29,23 @@ class HeadTail(private var hx: Int = 0, private var hy: Int = 0) {
         tailFollow()
     }
 
+    private fun isSeparated(dx: Int, dy: Int): Boolean {
+        return maxOf (dx, dy) > 1
+    }
+
     private fun tailFollow() {
         val dx = hx - tx
         val dy = hy - ty
 
-        if (abs(dx) + abs(dy) > 2) {
-            tx += dx / abs(dx)
-            ty += dy / abs(dy)
-        }
-        else if (abs(dx) > 1) {
-            tx += dx / abs(dx)
-        }
-        else if (abs(dy) > 1) {
-            ty += dy / abs(dy)
+        if ( isSeparated(dx, dy) ) {
+            tx += dx.coerceIn(-1, 1)
+            ty += dy.coerceIn(-1, 1)
         }
 
-        seenByTail.add( tx to ty )
+        tailVisits.add( tx to ty )
     }
 
-    fun tailVisits(): Int = seenByTail.count()
+    fun tailVisits(): Int = tailVisits.size
 }
 
 class Rope(length: Int) {

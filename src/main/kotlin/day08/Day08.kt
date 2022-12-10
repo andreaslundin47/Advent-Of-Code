@@ -20,10 +20,10 @@ fun <T> List<List<T>>.transpose(): List<List<T>> =
 fun List<Int>.visibilityAlongLine(): List<Boolean> {
 
     fun List<Int>.visibilityFromLeft(): List<Boolean> =
-    drop(1).scan(first() to true ) { acc, treeHeight ->
-        val highestSoFar = acc.first
-        max(highestSoFar, treeHeight) to (treeHeight > highestSoFar)
-    }.map { it.second }
+        drop(1).scan(first() to true ) { acc, treeHeight ->
+            val highestSoFar = acc.first
+            max(highestSoFar, treeHeight) to (treeHeight > highestSoFar)
+        }.map { it.second }
 
     val visibleFromLeft = visibilityFromLeft()
     val visibleFromRight = reversed().visibilityFromLeft().reversed()
