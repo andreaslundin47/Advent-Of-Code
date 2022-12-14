@@ -1,100 +1,103 @@
 package day13
 
-val inputPairs: List<Pair<String,String>> = java.io.File("src/main/resources/day13.txt")
+data class Signal(val signal: String): Comparable<Signal> {
+
+    private val tokenized: List<String> = tokenize(signal)
+
+    private fun tokenize(signal: String): List<String> {
+        var remaining = signal
+        val tokens = mutableListOf<String>()
+
+        while (remaining.isNotEmpty()) {
+
+            when (remaining.first()) {
+                '[', ']' -> {
+                    tokens += remaining.first().toString()
+                    remaining = remaining.drop(1)
+                }
+
+                ',' -> remaining = remaining.drop(1)
+
+                in '0'..'9' -> {
+                    tokens += remaining.takeWhile { it.isDigit() }
+                    remaining = remaining.dropWhile { it.isDigit() }
+                }
+
+                else -> error("Unexpected character while parsing signal representation")
+            }
+        }
+        return tokens
+    }
+
+    override fun compareTo(other: Signal): Int {
+        return compare(this.tokenized, other.tokenized)
+    }
+
+
+    private fun compare(list1: List<String>, list2: List<String>): Int {
+
+        fun String.isNumber() = this !in setOf("[", "]")
+
+        fun List<String>.makeHeadList() = listOf("[", this.first(), "]") + this.drop(1)
+
+        fun compareRec(l1: List<String>, l2: List<String>): Int {
+            if (l1.isEmpty() && l2.isNotEmpty())
+                return -1
+
+            else if (l1.isNotEmpty() && l2.isEmpty())
+                return 1
+
+            else if (l1.first() == l2.first())
+                return compareRec(l1.drop(1), l2.drop(1))
+
+            else if (l1.first() == "]" && l2.first() != "]")
+                return -1
+
+            else if (l2.first() == "]" && l1.first() != "]")
+                return 1
+
+            else if (l1.first().isNumber() && l2.first() == "[")
+                return compareRec(l1.makeHeadList(), l2)
+
+            else if (l1.first() == "[" && l2.first().isNumber())
+                return compareRec(l1, l2.makeHeadList())
+
+            else if (l1.first().toInt() < l2.first().toInt())
+                return -1
+
+            else if (l1.first().toInt() > l2.first().toInt())
+                return 1
+
+            else
+                error("Unexpected list pair in comparison")
+        }
+
+        return compareRec(list1, list2)
+    }
+}
+
+
+val signalPairs: List<Pair<Signal,Signal>> = java.io.File("src/main/resources/day13.txt")
     .readText()
     .trim()
     .split("\n\n")
-    .map { it.lines().let { (l1, l2) -> l1 to l2 }
+    .map { block -> block.lines().let { (l1, l2) -> Signal(l1) to Signal(l2) }
 }
-
-
-fun tokenize(signal: String): List<String> {
-    var remaining = signal
-    val tokens = mutableListOf<String>()
-
-    while (remaining.isNotEmpty()) {
-
-        when (remaining.first()) {
-           '[', ']' -> {
-               tokens += remaining.first().toString()
-               remaining = remaining.drop(1)
-           }
-
-           ',' -> {
-                remaining = remaining.drop(1)
-           }
-
-           in '0'..'9' -> {
-                tokens += remaining.takeWhile { it.isDigit() }
-                remaining = remaining.dropWhile { it.isDigit() }
-            }
-
-           else -> error("Bad!")
-        }
-    }
-    return tokens
-}
-
-fun compare(first: List<String>, second: List<String>): Boolean {
-    if (first.isEmpty() && second.isNotEmpty()) {
-        return true
-    }
-    else if (first.isNotEmpty() && second.isEmpty()) {
-        return false
-    }
-    else if (first.first() == "]" && second.first() != "]") {
-        return true
-    }
-    else if (first.first() != "]" && second.first() == "]") {
-        return false
-    }
-    else if (first.first() == "[" && second.first() !in setOf("[", "]")) {
-        return compare(first, listOf("[", second.first(), "]") + second.drop(1))
-    }
-    else if (first.first() !in setOf("[", "]") && second.first() == "[") {
-        return compare(listOf("[", first.first(), "]") + first.drop(1), second)
-    }
-    else if (first.first() == second.first()) {
-        return compare(first.drop(1), second.drop(1))
-    }
-    else if (first.first().toInt() < second.first().toInt()) {
-        return true
-    }
-    else if (first.first().toInt() > second.first().toInt()) {
-        return false
-    }
-    else {
-        error("Bad!!!")
-    }
-
-
-}
-
 
 fun solvePartOne() {
-   val sum = inputPairs.mapIndexed { i, signals ->
-        if (signals.toList().map { tokenize(it) }.let { (s1,s2) -> compare(s1,s2) } ) i+1 else 0
+    val sum = signalPairs.mapIndexed { i, signals ->
+        signals.let { (s1, s2) -> if (s1 < s2) i+1 else 0 }
     }.sum()
     println("Part 1. Sum = $sum")
 }
 
 fun solvePartTwo() {
-    val signals = (inputPairs.flatMap { it.toList() } + listOf( "[[2]]", "[[6]]"))
-
-    val sortedSignals = signals.sortedWith{ s1, s2 ->
-        when (compare(tokenize(s1), tokenize(s2)) ) {
-            true -> -1
-            false -> 1
-        }
-    }
-
-    val div1 = sortedSignals.indexOf("[[2]]") + 1
-    val div2 = sortedSignals.indexOf("[[6]]") + 1
-    val prod = div1 * div2
-
+    val divs = listOf( Signal("[[2]]"), Signal("[[6]]") )
+    val signalsAndDivs = divs + signalPairs.flatMap { it.toList() }
+    val sortedSignals = signalsAndDivs.sorted()
+    val prod = divs.map { sortedSignals.indexOf(it) + 1 }.reduce(Int::times)
     println("Part 2. Product = $prod")
 }
-
 
 fun main() {
     solvePartOne()
