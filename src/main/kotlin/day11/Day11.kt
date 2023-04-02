@@ -1,101 +1,87 @@
 package day11
 
-val inputs = java.io.File("src/main/resources/day11.txt").readText().trim().split("\n\n")
-
-typealias AmplifierFunction = (Long) -> Long
-
-fun toAmplifierFunction(text: String): AmplifierFunction {
-    val (_, op, right) = text.split(" ")
-    val rr = right.toIntOrNull()
-
-    return when (op) {
-        "+" -> if (rr != null) { x -> x + rr } else { x -> x + x }
-        "*" -> if (rr != null) { x -> x * rr } else { x -> x * x }
-        else -> error("Unexpected string representation")
-    }
-}
-
-
-data class MonkeyData(val items: List<Long>,
-                      val worryAmplifier: AmplifierFunction,
-                      val divisor: Long,
-                      val targetTrue: Int,
-                      val targetFalse: Int,
-) {
-    companion object {
-        fun fromString(text: String): MonkeyData {
-            val rows = text.lines()
-
-            val items = rows[1].substringAfter(": ").split(", ").map { it.toLong() }
-            val amplifier = toAmplifierFunction(rows[2].substringAfterLast("= "))
-            val divisor = rows[3].substringAfterLast(" ").toLong()
-            val targetTrue = rows[4].substringAfterLast(" ").toInt()
-            val targetFalse = rows[5].substringAfterLast(" ").toInt()
-
-            return MonkeyData(items, amplifier, divisor, targetTrue, targetFalse)
-        }
-    }
-}
-
-
-fun solvePartOne() {
-    val monkeys = inputs.map { MonkeyData.fromString(it) }
-    val monkeyItems: List<MutableList<Long>> = monkeys.map { it.items.toMutableList() }
-    val inspectionCounts = MutableList(monkeys.size) { 0 }
-
-
-    repeat(20) {
-        monkeys.forEachIndexed { i, monkey ->
-
-            monkeyItems[i].forEach { item ->
-                val worry = monkey.worryAmplifier(item) / 3
-
-                when (worry % monkey.divisor == 0L) {
-                    true -> monkeyItems[monkey.targetTrue] += worry
-                    false -> monkeyItems[monkey.targetFalse] += worry
-                }
-            }
-
-            inspectionCounts[i] += monkeyItems[i].size
-            monkeyItems[i].clear()
-        }
-    }
-
-    val monkeyBusiness = inspectionCounts.sorted().takeLast(2).let { (a,b) -> a * b }
-    println("Part 1. Monkey Business = $monkeyBusiness")
-}
-
-
-fun solvePartTwo() {
-    val monkeys = inputs.map { MonkeyData.fromString(it) }
-    val monkeyItems: List<MutableList<Long>> = monkeys.map { it.items.toMutableList() }
-    val inspectionCounts = MutableList<Long>(monkeys.size) { 0 }
-
-    val gcd = monkeys.map { it.divisor }.reduce { acc, v -> acc * v }
-
-    repeat(10_000) {
-        monkeys.forEachIndexed { i, monkey ->
-
-            monkeyItems[i].forEach { item ->
-                val worry = monkey.worryAmplifier(item) % gcd
-
-                when (worry % monkey.divisor == 0L) {
-                    true -> monkeyItems[monkey.targetTrue] += worry
-                    false -> monkeyItems[monkey.targetFalse] += worry
-                }
-            }
-
-            inspectionCounts[i] += monkeyItems[i].size.toLong()
-            monkeyItems[i].clear()
-        }
-    }
-
-    val monkeyBusiness = inspectionCounts.sorted().takeLast(2).let { (a,b) -> a * b }
-    println("Part 2. Monkey Business = $monkeyBusiness")
-}
-
-
 fun main() {
-    solvePartOne()
-    solvePartTwo()
+    val inputs = java.io.File("src/main/resources/day11.txt").readText()
+
+    println("Part 1. ${Day11(inputs).solvePartOne()}")
+    println("Part 2. ${Day11(inputs).solvePartTwo()}")
 }
+
+
+class Day11(input: String) {
+
+    private val monkeys = input.trim().split("\n\n").map { Monkey.fromString(it.lines()) }
+
+    fun solvePartOne(): Long {
+        playRounds(20) { it / 3 }
+        return monkeys.business()
+    }
+
+    fun solvePartTwo(): Long {
+        val factor = monkeys.map { it.testDivisor }.reduce(Long::times)
+        playRounds(10_000) { it % factor }
+        return monkeys.business()
+    }
+
+    private fun playRounds(rounds: Int, worryPacifier: (Long) -> Long) {
+        repeat(rounds) {
+            monkeys.forEach { it.inspectItems(monkeys, worryPacifier) }
+        }
+    }
+
+    private fun List<Monkey>.business(): Long =
+        map { it.interactions }.sortedDescending().take(2).reduce(Long::times)
+
+    private class Monkey(
+        val items: MutableList<Long>,
+        val operation: (Long) -> Long,
+        val testDivisor: Long,
+        val trueMonkeyId: Int,
+        val falseMonkeyId: Int
+    ) {
+        var interactions: Long = 0
+
+        fun inspectItems(monkeys: List<Monkey>, worryPacifier: (Long) -> Long) {
+
+            items.forEach { item ->
+                val worry = worryPacifier( operation(item) )
+                val target = if (worry % testDivisor == 0L) trueMonkeyId else falseMonkeyId
+                monkeys[target].items.add(worry)
+            }
+
+            interactions += items.size
+            items.clear()
+        }
+
+        companion object {
+
+            fun parseOperation(input: String): (Long) -> Long {
+                val (_, op, right) = input.split(" ")
+                val ll = right.toLongOrNull()
+
+                return when (op) {
+                    "+" -> if (ll == null) ({ it + it }) else ({ it + ll })
+                    else -> if (ll == null) ({ it * it }) else ({ it * ll })
+                }
+            }
+
+            fun fromString(input: List<String>): Monkey {
+
+                val items = input[1]
+                    .substringAfter(":")
+                    .split(",")
+                    .map { it.trim().toLong() }
+                    .toMutableList()
+
+                val operation = parseOperation(input[2].substringAfter("= "))
+                val divisor = input[3].substringAfter("by ").toLong()
+                val trueMonkey = input[4].substringAfter("monkey ").toInt()
+                val falseMonkey = input[5].substringAfter("monkey ").toInt()
+
+                return Monkey(items, operation, divisor, trueMonkey, falseMonkey)
+            }
+        }
+    }
+}
+
+
