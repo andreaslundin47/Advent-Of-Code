@@ -1,11 +1,13 @@
 import java.util.PriorityQueue
 import kotlin.math.absoluteValue
+import kotlin.math.max
 
 fun main() {
     val input = java.io.File("src/main/resources/input-23.txt").readText().trim()
     //val input = java.io.File("src/main/resources/input-23-sample1.txt").readText().trim()
     val day = Day23(input)
-    day.solvePartOne()
+    //day.solvePartOne()
+    day.solvePartTwo()
 }
 
 class Day23(input: String) {
@@ -58,10 +60,15 @@ class Day23(input: String) {
             .filter { it in points }
     }
 
-    fun Point.IsExit(other: Point): Boolean {
+    fun Point.IsExit(other: Point, directed: Boolean): Boolean {
         if (!isAdjacent(other) || other !in points) {
             return false
         }
+
+        if (!directed) {
+            return true
+        }
+
         val valid = listOf(north to '^', south to 'v', west to '<', east to '>')
         val sym = symbols.getValue(other)
         val shift = other - this
@@ -80,14 +87,26 @@ class Day23(input: String) {
 
     private val entryPoints: Map<Point, List<Point>> = (
         intersections
-            .associateWith { entry -> entry.neighbours().filter { n -> entry.IsExit(n) } }
+            .associateWith { entry -> entry.neighbours().filter { n -> entry.IsExit(n, true) } }
             .toMutableMap() +
                 (start to listOf(start + south))
+            ).toMap()
+
+    private val entryPoints2: Map<Point, List<Point>> = (
+            intersections
+                .associateWith { entry -> entry.neighbours().filter { n -> entry.IsExit(n, false) } }
+                .toMutableMap() +
+                    (start to listOf(start + south))
             ).toMap()
 
     private val edges: Map<Point, Set<Edge>> = entryPoints
         .map { (entry, exits) ->
             entry to exits.map { ex -> entry.findEdge(ex) }.toSet()
+        }.toMap()
+
+    private val edges2: Map<Point, Set<Edge>> = entryPoints2
+        .map { (entry, exits) ->
+            entry to exits.map { ex -> entry.findEdge2(ex) }.toSet()
         }.toMap()
 
     data class Edge(val destination: Point, val length: Int)
@@ -98,6 +117,23 @@ class Day23(input: String) {
         var next = exit
 
         while (next !in endPoints) {
+            val nextNext = next.neighbours().filterNot { it == current }.first()
+            current = next
+            next = nextNext
+            dist += 1
+        }
+
+        return Edge(next, dist)
+    }
+
+    private fun Point.findEdge2(exit: Point): Edge {
+        var dist = 1
+        var current = this
+        var next = exit
+
+        val endP = endPoints + start
+
+        while (next !in endP) {
             val nextNext = next.neighbours().filterNot { it == current }.first()
             current = next
             next = nextNext
@@ -134,9 +170,34 @@ class Day23(input: String) {
          }
 
          val longest = -distances.getValue(finish)
-         val count = intersections.size
-         println("Part 1. Vertices = $count")
          println("Part 1. Longest distance = $longest")
     }
 
+    fun solvePartTwo() {
+        val remaining = intersections.toSet() + finish
+        val (_, maxSteps) = steps(start, remaining)
+        println("Part 2. steps = $maxSteps")
+    }
+
+    private fun steps(current: Point, remaining: Set<Point>): Pair<Boolean, Int> {
+        if (current == finish) {
+            return true to 0
+        }
+
+        val edges = edges2[current] ?: return false to 0
+
+        var best = 0
+        var worked = false
+        for ((next, steps) in edges) {
+            if (next in remaining) {
+                val (success, count) = steps(next, remaining - next)
+                if (success) {
+                    worked = true
+                    best = max(best, steps + count)
+                }
+            }
+        }
+
+        return worked to best
+    }
 }
