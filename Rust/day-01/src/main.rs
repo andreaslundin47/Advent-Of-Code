@@ -1,53 +1,58 @@
+use std::iter::successors;
+
 fn main() {
     let input = include_str!("../input.txt").trim();
     part_one(input);
     part_two(input);
 }
 
-
 fn part_one(input: &str) {
+    let sum: u32 = input
+        .lines()
+        .map(|line| {
+            let mut digits = line.chars().filter_map(|c| c.to_digit(10));
 
-    let sum: u32 = input.lines().map(|line| {
+            let first = digits.next().unwrap();
 
-        let digits: Vec<u32> = line
-            .chars()
-            .filter_map(|c| c.to_digit(10))
-            .collect();
-
-        let first = digits.first().unwrap();
-        let last = digits.last().unwrap();
-
-        first * 10 + last
-    })
-    .sum();
+            if let Some(last) = digits.last() {
+                10 * first + last
+            } else {
+                11 * first
+            }
+        })
+        .sum();
 
     println!("Part 1: Sum = {sum}");
 }
 
-
 fn part_two(input: &str) {
+    let digit_words = [
+        "one", "two", "three", "four", "five", "six", "seven", "eight", "nine",
+    ];
 
-    let digit_words = ["one", "two", "three", "four", "five", "six", "seven", "eight", "nine"];
+    let sum: usize = input
+        .lines()
+        .map(|line| {
+            let line_substrings = successors(Some(line), |s| (s.len() > 1).then_some(&s[1..]));
 
-    let sum: u32 = input.lines().map(|line| {
-
-        let digits: Vec<u32> = line
-            .chars()
-            .enumerate()
-            .filter_map(|(i,c)| {
-                if c.is_digit(10) {
-                    c.to_digit(10)
+            let mut digits = line_substrings.filter_map(|sub| {
+                if let Some(index) = digit_words.iter().position(|word| sub.starts_with(word)) {
+                    Some(index + 1)
+                } else {
+                    let first_char = sub.chars().next().unwrap();
+                    first_char.to_digit(10).map(|d| d as usize)
                 }
-                else {
-                    let pos = digit_words.iter().position(|word| line[i..].starts_with(word));
-                    pos.map_or(None, |p| Some(p as u32 + 1))
-                }
-            })
-            .collect::<Vec<u32>>();
+            });
 
-        digits.first().unwrap() * 10 + digits.last().unwrap()
-    })
-    .sum();
+            let first = digits.next().unwrap();
+
+            if let Some(last) = digits.last() {
+                10 * first + last
+            } else {
+                11 * first
+            }
+        })
+        .sum();
 
     println!("Part 2: Sum = {sum}");
 }
