@@ -1,5 +1,5 @@
 fn main() {
-    let input: Vec<&str> = include_str!("../input.txt").trim().split(",").collect();
+    let input: Vec<&str> = include_str!("../input.txt").trim().split(',').collect();
 
     // Part 1
     let sum: usize = input.iter().map(|step| aoc_hash(step)).sum();
@@ -10,7 +10,7 @@ fn main() {
 
     for op in input.iter() {
         if op.contains('=') {
-            let (key, value) = op.split_once("=").expect("Valid key-value pair");
+            let (key, value) = op.split_once('=').expect("Valid key-value pair");
             let value = value.parse::<usize>().expect("A digit");
             aoc_map.insert(key, value);
         } else if op.contains('-') {
@@ -64,8 +64,7 @@ impl AoCHashMap {
     }
 
     fn total_focusing_power(&self) -> usize {
-        let sum: usize = self
-            .boxes
+        self.boxes
             .iter()
             .enumerate()
             .map(|(box_index, map_box)| {
@@ -78,8 +77,6 @@ impl AoCHashMap {
                     })
                     .sum::<usize>()
             })
-            .sum();
-
-        return sum;
+            .sum()
     }
 }
