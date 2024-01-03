@@ -1,0 +1,1 @@
+/Users/andreas/Documents/AdventOfCode/Advent-Of-Code-2017/day-18/target/debug/day-18: /Users/andreas/Documents/AdventOfCode/Advent-Of-Code-2017/day-18/input.txt /Users/andreas/Documents/AdventOfCode/Advent-Of-Code-2017/day-18/src/main.rs
