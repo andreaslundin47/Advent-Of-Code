@@ -1,3 +1,5 @@
+use itertools::Itertools;
+
 fn main() {
     let input = "1321131112";
 
@@ -20,25 +22,10 @@ fn main() {
 fn look_and_say(s: &str) -> String {
     let mut output = String::new();
 
-    let mut chars = s.chars();
-
-    let mut current_char = match chars.next() {
-        Some(ch) => ch,
-        None => return output,
-    };
-
-    let mut current_count = 1;
-
-    for c in chars {
-        if c != current_char {
-            output += &format!("{current_count}{current_char}");
-            current_char = c;
-            current_count = 0;
-        }
-        current_count += 1;
+    for (key, group) in &s.chars().group_by(|c| *c) {
+        let count = group.count();
+        output += &format!("{count}{key}");
     }
-
-    output += &format!("{current_count}{current_char}");
 
     output
 }   
