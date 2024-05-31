@@ -1,83 +1,128 @@
-use std::str::FromStr;
+use itertools::{Itertools, Position};
 use std::cmp::Ordering;
-use itertools::Itertools;
 
 // --------------------------------------------------------------------
-#[derive(Debug, PartialEq, Ord, Eq)]
-struct Card {
-    rank: usize,
-    symbol: char,
+fn main() {
+    let raw_input = include_str!("../input.txt").trim();
+
+    let winnings_one: usize = raw_input
+        .lines()
+        .map(|line| {
+            let (cards, bid) = get_hand(line);
+            Hand::new(cards, bid)
+        })
+        .sorted()
+        .enumerate()
+        .map(|(index, hand)| (index + 1) * hand.bid)
+        .sum();
+    println!("Part 1. Winnings = {winnings_one}");
+
+    let winnings_two: usize = raw_input
+        .lines()
+        .map(|line| {
+            let (cards, bid) = get_hand(line);
+            Hand::new_with_joker_rule(cards, bid)
+        })
+        .sorted()
+        .enumerate()
+        .map(|(index, hand)| (index + 1) * hand.bid)
+        .sum();
+    println!("Part 2. Winnings = {winnings_two}");
 }
 
-impl PartialOrd for Card {
-    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
-        Some(self.rank.cmp(&other.rank))
-    }
+fn get_hand(line: &str) -> (&str, usize) {
+    let (cards, bid) = line.split_once(' ').unwrap();
+    (cards, bid.parse::<usize>().unwrap())
 }
-
-impl Card {
-    fn create(symbol: char, joker_rule: bool) -> Card {
-
-        let rank_ordering = match joker_rule {
-            false => "23456789TJQKA",
-            true => "J23456789TQKA",
-        };
-
-        let rank = rank_ordering
-                .chars()
-                .position(|c| c == symbol)
-                .expect("A valid rank");
-        Card { rank, symbol: symbol }
-    }
-}
-
 // --------------------------------------------------------------------
-#[derive(Debug, Ord, Eq, PartialEq)]
+#[derive(PartialEq, Eq)]
 struct Hand {
-    cards: Vec<Card>,
     hand_type: HandType,
+    cards: Vec<Card>,
     bid: usize,
 }
 
-impl Hand {
-    fn create(input: &str, joker_rule: bool) -> Hand {
-        let (raw_cards, raw_bid) = input.split_once(" ").expect("Row as a pair");
-
-       let cards: Vec<Card> = raw_cards
-            .chars()
-            .map(|c| Card::create(c, joker_rule))
-            .collect();
-
-        let mut hand_type: HandType = raw_cards.parse().expect("A valid hand type");
-
-        if joker_rule {
-            hand_type = hand_type.joker_upgrade(raw_cards);
+impl Ord for Hand {
+    fn cmp(&self, other: &Self) -> Ordering {
+        if self.hand_type != other.hand_type {
+            self.hand_type.cmp(&other.hand_type)
+        } else {
+            self.cards.cmp(&other.cards)
         }
-
-        let bid = raw_bid.parse::<usize>().expect("A valid bid");
-
-        Hand { cards, hand_type, bid }
     }
 }
 
 impl PartialOrd for Hand {
-    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
-        if self.hand_type != other.hand_type {
-            self.hand_type.partial_cmp(&other.hand_type)
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+impl Hand {
+    fn new(cards: &str, bid: usize) -> Self {
+        Self {
+            hand_type: HandType::new(cards),
+            cards: cards.chars().map(Card::new).collect(),
+            bid,
         }
-        else {
-            for (c1, c2) in self.cards.iter().zip(other.cards.iter()) {
-                match c1.partial_cmp(c2) {
-                    Some(Ordering::Equal) => continue,
-                    _ => return c1.partial_cmp(c2),
-                }
-            }
-            Some(Ordering::Equal)
+    }
+
+    fn new_with_joker_rule(cards: &str, bid: usize) -> Self {
+        Self {
+            hand_type: HandType::new_with_joker_rule(cards),
+            cards: cards.chars().map(Card::new_with_joker_rule).collect(),
+            bid,
         }
     }
 }
 // --------------------------------------------------------------------
-#[derive(Debug, PartialOrd, Ord, PartialEq, Eq, Copy, Clone)]
+#[derive(PartialEq, Eq)]
+struct Card {
+    rank: usize,
+    char: char,
+}
+
+impl Ord for Card {
+    fn cmp(&self, other: &Self) -> Ordering {
+        self.rank.cmp(&other.rank)
+    }
+}
+
+impl PartialOrd for Card {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+impl Card {
+    fn new(char: char) -> Self {
+        let rank = match char {
+            'A' => 14,
+            'K' => 13,
+            'Q' => 12,
+            'J' => 11,
+            'T' => 10,
+            _ => char.to_digit(10).unwrap() as usize,
+        };
+
+        Self { rank, char }
+    }
+
+    fn new_with_joker_rule(char: char) -> Self {
+        let rank = match char {
+            'A' => 14,
+            'K' => 13,
+            'Q' => 12,
+            'J' => 1,
+            'T' => 10,
+            _ => char.to_digit(10).unwrap() as usize,
+        };
+
+        Self { rank, char }
+    }
+}
+// --------------------------------------------------------------------
+#[derive(PartialEq, Eq, PartialOrd, Ord, Copy, Clone)]
 enum HandType {
     HighCard,
     OnePair,
@@ -88,109 +133,47 @@ enum HandType {
     Five,
 }
 
-impl FromStr for HandType {
-    type Err = String;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        assert!(s.len() == 5, "A hand must have five cards");
-
-        let counts = s.chars().counts().values().cloned().collect::<Vec<usize>>();
-
-        if counts.contains(&5) {
-            Ok(HandType::Five)
-        }
-        else if counts.contains(&4) {
-            Ok(HandType::Four)
-        }
-        else if counts.contains(&3) && counts.contains(&2) {
-            Ok(HandType::FullHouse)
-        }
-        else if counts.contains(&3) {
-            Ok(HandType::Three)
-        }
-        else if counts.contains(&2) && counts.len() <= 3 {
-            Ok(HandType::TwoPair)
-        }
-        else if counts.contains(&2) && counts.len() == 4 {
-            Ok(HandType::OnePair)
-        }
-        else if counts.len() == 5 {
-            Ok(HandType::HighCard)
-        }
-        else {
-            unreachable!("Should have found a hand by now");
-        }
-    }
-}
-
 impl HandType {
-    fn joker_upgrade(&self, card_string: &str) -> HandType {
-        // TODO: Improve this ugly thing!
-        let unique_non_joker = card_string.chars().filter(|&c| c != 'J').counts().values().len();
-        let counts = card_string.chars().counts();
-        let joker_count = counts.get(&'J').unwrap_or(&0).clone();
-
-        match (unique_non_joker, joker_count) {
-            (_, 5) => HandType::Five,
-            (_, 4) => HandType::Five,
-            (2, 3) => HandType::Four,
-            (1, 3) => HandType::Five,
-            (1, 2) => HandType::Five,
-            (2, 2) => HandType::Four,
-            (3, 2) => HandType::Three,
-            (4, 1) => HandType::OnePair,
-            (3, 1) => HandType::Three,
-            (2, 1) => match self {
-                    HandType::TwoPair => HandType::FullHouse,
-                    HandType::Three => HandType::Four,
-                    _ => unreachable!("Should not be possible!"),
-            }
-            (1, 1) => HandType::Five,
-            _ => *self
+    fn from_dist(dist: &str) -> Self {
+        match dist {
+            "5" => HandType::Five,
+            "41" => HandType::Four,
+            "32" => HandType::FullHouse,
+            "311" => HandType::Three,
+            "221" => HandType::TwoPair,
+            "2111" => HandType::OnePair,
+            "11111" => HandType::HighCard,
+            _ => unreachable!("Impossible with 5 cards"),
         }
     }
-}
-// --------------------------------------------------------------------
 
-fn total_winnings(hands: &mut Vec<Hand>) -> usize {
-    let mut total_winnings = 0;
-
-    hands.sort();
-
-
-    for (index, hand) in hands.iter().enumerate() {
-        let rank = index + 1;
-        let winnings = (*hand).bid * rank;
-        total_winnings += winnings;
+    fn new(cards: &str) -> Self {
+        assert_eq!(5, cards.len());
+        let counts = cards.chars().counts().values().sorted().rev().join("");
+        HandType::from_dist(&counts)
     }
 
-    total_winnings
-}
+    fn new_with_joker_rule(cards: &str) -> Self {
+        match cards.chars().counts().get(&'J') {
+            None => HandType::new(cards),
+            Some(jokers) if jokers == &5 => HandType::Five,
+            Some(jokers) => {
+                let dist = cards
+                    .chars()
+                    .counts()
+                    .iter()
+                    .filter_map(|(value, count)| (value != &'J').then_some(count))
+                    .sorted()
+                    .rev()
+                    .with_position()
+                    .map(|(pos, count)| match pos {
+                        Position::First | Position::Only => count + jokers,
+                        _ => *count,
+                    })
+                    .join("");
 
-fn solve_part_one(input: &str) {
-
-    let mut hands: Vec<Hand> = input
-            .lines()
-            .map(|line| Hand::create(line, false))
-            .collect();
- 
-    println!("Part 1. Total winnings = {}", total_winnings(&mut hands));
-}
-
-fn solve_part_two(input: &str) {
-
-    let mut hands: Vec<Hand> = input
-            .lines()
-            .map(|line| Hand::create(line, true))
-            .collect();
- 
-    println!("Part 2. Total winnings = {}", total_winnings(&mut hands));
-}
-
-fn main() {
-    //let raw_input = include_str!("../sample1-input.txt").trim();
-    //let raw_input = include_str!("../sample2-input.txt").trim();
-    let raw_input = include_str!("../input.txt").trim();
-    solve_part_one(&raw_input);
-    solve_part_two(&raw_input);
+                HandType::from_dist(&dist)
+            }
+        }
+    }
 }
