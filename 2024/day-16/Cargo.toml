@@ -1,0 +1,9 @@
+[package]
+name = "day-16"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+glam = "0.29.2"
+itertools = "0.13.0"
+priority-queue = "2.1.1"
